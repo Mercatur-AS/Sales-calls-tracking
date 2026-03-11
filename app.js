@@ -1,6 +1,21 @@
 (function () {
     const STORAGE_KEY = 'sales-tracker';
 
+    // --- Supabase config ---
+    const SUPABASE_URL = 'https://fjqayyrzbvzwsiqdxmgo.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqcWF5eXJ6YnZ6d3NpcWR4bWdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTY0ODUsImV4cCI6MjA4NzY5MjQ4NX0.rkKIb5lg3lkS3Df007IEaqAua6WVTAK68yza1g_yjfw';
+
+    function supabaseFetch(path, options) {
+        return fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            }
+        }, options));
+    }
+
     // --- Data ---
 
     function getTodayStr() {
@@ -24,7 +39,6 @@
         const data = loadData();
         const today = getTodayStr();
         if (data && data.date === today) return data;
-        // New day — reset
         const fresh = { date: today, activities: [] };
         saveData(fresh);
         return fresh;
@@ -42,6 +56,37 @@
         data.activities.push({ time, type });
         saveData(data);
         updateUI();
+
+        // Sync to Supabase (fire-and-forget)
+        supabaseFetch('sales_calls', {
+            method: 'POST',
+            body: JSON.stringify({
+                call_date: getTodayStr(),
+                call_time: time,
+                call_type: type
+            })
+        }).catch(function () { /* offline is fine, localStorage has it */ });
+    }
+
+    // Load today's data from Supabase on startup
+    function syncFromSupabase() {
+        var today = getTodayStr();
+        supabaseFetch('sales_calls?call_date=eq.' + today + '&order=created_at.asc', {
+            method: 'GET'
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (rows) {
+            if (!Array.isArray(rows) || rows.length === 0) return;
+            var data = {
+                date: today,
+                activities: rows.map(function (r) {
+                    return { time: r.call_time, type: r.call_type };
+                })
+            };
+            saveData(data);
+            updateUI();
+        })
+        .catch(function () { /* use localStorage data */ });
     }
 
     // --- UI Updates ---
@@ -111,7 +156,6 @@
         const countdown = document.getElementById('timer-countdown');
 
         if (minutesInHour < 45) {
-            // Work period: count down from 45 min
             const remaining = (44 - minutesInHour) * 60 + (60 - secondsInMinute);
             const mins = Math.floor(remaining / 60);
             const secs = remaining % 60;
@@ -119,7 +163,6 @@
             label.textContent = 'Arbeidstid';
             timerBar.classList.remove('pause');
         } else {
-            // Break period: count down from 15 min
             const remaining = (59 - minutesInHour) * 60 + (60 - secondsInMinute);
             const mins = Math.floor(remaining / 60);
             const secs = remaining % 60;
@@ -131,19 +174,16 @@
 
     // --- Init ---
 
-    // Button handlers
     document.querySelectorAll('.action-btn').forEach(btn => {
         btn.addEventListener('click', () => addActivity(btn.dataset.type));
     });
 
-    // Initial render
     updateUI();
     updateTimer();
+    syncFromSupabase();
 
-    // Timer: every second
     setInterval(updateTimer, 1000);
 
-    // Activity log + header: every minute (catches hour changes)
     let lastHour = new Date().getHours();
     setInterval(() => {
         const currentHour = new Date().getHours();

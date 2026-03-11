@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Calls Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="timer-bar">
+        <div class="timer-container">
+            <span id="timer-label">Arbeidstid</span>
+            <span id="timer-countdown">45:00</span>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="buttons-section">
+                <button class="action-btn btn-ringt" data-type="Ringt">Ringt</button>
+                <button class="action-btn btn-samtale" data-type="Samtale">Samtale</button>
+                <button class="action-btn btn-oppfolging" data-type="Oppfølging">Oppfølging</button>
+                <button class="action-btn btn-mote" data-type="Møte i kalender">Møte i kalender</button>
+            </div>
+
+            <div class="metrics-section">
+                <h2>Dagens tall</h2>
+                <div class="metric">
+                    <span class="metric-label">Samtaler</span>
+                    <span class="metric-value" id="metric-samtale">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Oppfølginger</span>
+                    <span class="metric-value" id="metric-oppfolging">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Møter booket</span>
+                    <span class="metric-value" id="metric-mote">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <h2 id="hour-header">08:00 – 09:00</h2>
+            <div class="activity-log" id="activity-log">
+                <p class="empty-state">Ingen aktiviteter denne timen</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

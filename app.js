@@ -53,7 +53,7 @@
         const now = new Date();
         const time = String(now.getHours()).padStart(2, '0') + ':' +
             String(now.getMinutes()).padStart(2, '0');
-        data.activities.push({ time, type });
+        data.activities.unshift({ time, type });
         saveData(data);
         updateUI();
 
@@ -71,7 +71,7 @@
     // Load today's data from Supabase on startup
     function syncFromSupabase() {
         var today = getTodayStr();
-        supabaseFetch('sales_calls?call_date=eq.' + today + '&order=created_at.asc', {
+        supabaseFetch('sales_calls?call_date=eq.' + today + '&order=created_at.desc', {
             method: 'GET'
         })
         .then(function (res) { return res.json(); })

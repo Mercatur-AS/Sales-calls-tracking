@@ -76,7 +76,7 @@
         })
         .then(function (res) { return res.json(); })
         .then(function (rows) {
-            if (!Array.isArray(rows) || rows.length === 0) return;
+            if (!Array.isArray(rows)) return;
             var data = {
                 date: today,
                 activities: rows.map(function (r) {
